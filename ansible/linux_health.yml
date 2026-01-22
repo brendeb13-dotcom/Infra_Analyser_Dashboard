@@ -1,0 +1,36 @@
+---
+- name: Linux Infrastructure Health Checks
+  hosts: linux
+  gather_facts: yes
+  vars:
+    wrapper_src: "../wrappers/linux"
+    wrapper_dest: "/tmp/infra-analyzer/linux"
+    client_id: "demo_client"
+    environment: "dev"
+    run_id: "{{ ansible_date_time.iso8601_basic }}"
+
+  tasks:
+    - name: Create wrapper directory on target
+      file:
+        path: "{{ wrapper_dest }}"
+        state: directory
+        mode: '0755'
+
+    - name: Copy Linux wrappers to target
+      copy:
+        src: "{{ wrapper_src }}/"
+        dest: "{{ wrapper_dest }}/"
+        mode: '0755'
+
+    - name: Run Linux health checks via runner
+      command: >
+        python3 {{ wrapper_dest }}/linux_runner.py
+        --client-id {{ client_id }}
+        --environment {{ environment }}
+        --run-id {{ run_id }}
+      register: health_output
+      changed_when: false
+
+    - name: Show raw health output (debug only)
+      debug:
+        var: health_output.stdout

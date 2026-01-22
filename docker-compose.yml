@@ -1,0 +1,122 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: infra-analyzer-db
+    environment:
+      POSTGRES_USER: infra_user
+      POSTGRES_PASSWORD: infra_password
+      POSTGRES_DB: infra_analyzer
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U infra_user -d infra_analyzer"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - infra-analyzer-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: infra-analyzer-cache
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - infra-analyzer-network
+
+  # FastAPI Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: infra-analyzer-backend
+    environment:
+      DATABASE_URL: postgresql://infra_user:infra_password@postgres:5432/infra_analyzer
+      REDIS_URL: redis://redis:6379/0
+      API_HOST: 0.0.0.0
+      API_PORT: 8000
+      FRONTEND_URL: http://localhost:3000
+      ALLOWED_ORIGINS: '["http://localhost:3000"]'
+      SECRET_KEY: change-me-in-production
+      WINRM_USERNAME: ${WINRM_USERNAME:-domain\username}
+      WINRM_PASSWORD: ${WINRM_PASSWORD:-password}
+      SSH_KEY_PATH: /app/ssh_keys/id_rsa
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+      - ssh_keys:/app/ssh_keys
+    networks:
+      - infra-analyzer-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # React Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: infra-analyzer-frontend
+    environment:
+      REACT_APP_API_BASE_URL: http://localhost:8000
+      REACT_APP_API_VERSION: v1
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - infra-analyzer-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Nginx Reverse Proxy (optional)
+  nginx:
+    image: nginx:alpine
+    container_name: infra-analyzer-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - infra-analyzer-network
+
+networks:
+  infra-analyzer-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+  ssh_keys:

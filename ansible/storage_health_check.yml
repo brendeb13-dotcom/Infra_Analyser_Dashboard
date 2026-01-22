@@ -1,0 +1,143 @@
+---
+# Ansible Playbook for Storage Health Check Deployment and Execution
+# This playbook:
+# 1. Runs storage health checks on Linux hosts
+# 2. Collects results
+# 3. Sends raw results to the dashboard API
+
+- name: Storage Health Check - Deploy and Execute
+  hosts: "{{ target_hosts | default('all') }}"
+  gather_facts: yes
+
+  vars:
+    script_dir: "/tmp/infra-analyzer-scripts"
+    results_dir: "/tmp/storage_results"
+    health_check_script: "storage_health_check.py"
+    dashboard_api_url: "http://172.18.16.1:8000/api/health"
+
+  pre_tasks:
+    - name: Display play information
+      debug:
+        msg:
+          - "Target Host: {{ inventory_hostname }}"
+          - "OS: {{ ansible_os_family }}"
+          - "Python: {{ ansible_python_version }}"
+
+    - name: Check connectivity
+      ping:
+
+  tasks:
+    # Task 1: Create required directories
+    - name: Create script directory
+      file:
+        path: "{{ script_dir }}/scripts"
+        state: directory
+        mode: '0755'
+
+    - name: Create results directory
+      file:
+        path: "{{ results_dir }}"
+        state: directory
+        mode: '0755'
+
+    # Task 2: Copy storage health check script
+    - name: Copy storage health check script (Linux)
+      copy:
+        src: "{{ script_dir }}/scripts/{{ health_check_script }}"
+        dest: "{{ results_dir }}/{{ health_check_script }}"
+        mode: '0755'
+      when: ansible_os_family != "Windows"
+
+    # Task 3: Execute storage health check script
+    - name: Execute storage health check (Linux)
+      shell: |
+        cd {{ results_dir }}
+        python3 {{ health_check_script }} > storage_check_output.json
+      register: storage_check_linux
+      when: ansible_os_family != "Windows"
+      changed_when: false
+
+    # Task 4: Fetch results to controller
+    - name: Fetch storage check results (Linux)
+      fetch:
+        src: "{{ results_dir }}/storage_check_output.json"
+        dest: "./collected_results/{{ inventory_hostname }}_storage_check.json"
+        flat: yes
+      when: ansible_os_family != "Windows"
+
+    # Task 5: Read raw result and send to dashboard
+    - name: Read storage result as raw text
+      set_fact:
+        raw_storage_result: "{{ lookup('file', './collected_results/' ~ inventory_hostname ~ '_storage_check.json') }}"
+      delegate_to: localhost
+      become: no
+
+    - name: Send storage health result to dashboard
+      uri:
+        url: "{{ dashboard_api_url }}"
+        method: POST
+        body:
+          run_id: "{{ ansible_date_time.epoch }}"
+          source: "ansible"
+          environment: "dev"
+          host:
+            ip: "{{ inventory_hostname }}"
+            hostname: "{{ inventory_hostname }}"
+            os: "{{ ansible_os_family }}"
+          check:
+            category: "infra"
+            name: "storage"
+            description: "Storage usage health check"
+          result:
+            status: "OK"
+            raw_output: "{{ raw_storage_result }}"
+          timestamp: "{{ ansible_date_time.iso8601 }}"
+        body_format: json
+        headers:
+          Content-Type: application/json
+      delegate_to: localhost
+      become: no
+
+    # Task 6: Cleanup temporary files on target
+    - name: Cleanup temporary files (Linux)
+      file:
+        path: "{{ results_dir }}"
+        state: absent
+      when: ansible_os_family != "Windows"
+
+  post_tasks:
+    - name: Display execution results
+      debug:
+        msg: "Storage health check completed for {{ inventory_hostname }}"
+
+#    - name: Log success
+ #     lineinfile:
+  #      path: "./execution_log.txt"
+   #     line: "[{{ ansible_date_time.iso8601 }}] SUCCESS: {{ inventory_hostname }}"
+    #    create: yes
+     # delegate_to: localhost
+      #become: no
+
+# Optional aggregation play (kept simple and safe)
+- name: Aggregate Storage Health Check Results
+  hosts: localhost
+  gather_facts: no
+
+  tasks:
+    - name: Ensure collected results directory exists
+      file:
+        path: "./collected_results"
+        state: directory
+      changed_when: false
+
+    - name: Find all result files
+      find:
+        path: "./collected_results"
+        pattern: "*_storage_check.json"
+      register: result_files
+
+    - name: Display aggregation summary
+      debug:
+        msg:
+          - "Results collected from {{ result_files.files | length }} hosts"
+          - "Raw result files stored in ./collected_results/"
