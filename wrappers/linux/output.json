@@ -1,0 +1,29 @@
+{
+  "schema_version": "1.0",
+  "run_id": "run_001",
+  "client_id": "demo_client",
+  "environment": "dev",
+  "collected_at": "2026-01-22T09:42:15.251767+00:00",
+  "host": {
+    "hostname": "DESKTOP-TH3V56S",
+    "fqdn": "DESKTOP-TH3V56S.localdomain",
+    "os": "linux",
+    "os_version": "Ubuntu 24.04.3 LTS",
+    "kernel": "6.6.87.2-microsoft-standard-WSL2"
+  },
+  "network": {
+    "primary_ip": "172.18.24.247",
+    "all_ips": [
+      "172.18.24.247"
+    ],
+    "listening_ports": [
+      53,
+      5798,
+      46061
+    ]
+  },
+  "hbas": [],
+  "luns": [],
+  "mappings": [],
+  "errors": []
+}

@@ -1,17 +1,17 @@
 from fastapi import APIRouter, HTTPException, Query
-from typing import Dict, List
 from datetime import datetime, timezone
+from typing import Dict, List
 
 # -----------------------------
 # Routers
 # -----------------------------
-ingest_router = APIRouter(prefix="/api", tags=["storage"])
-read_router = APIRouter(prefix="/api/v1", tags=["storage"])
+ingest_router = APIRouter(prefix="/api", tags=["san-ingest"])
+read_router = APIRouter(prefix="/api/v1", tags=["san"])
 
 # -----------------------------
 # In-memory store (B2 scope)
 # -----------------------------
-STORAGE_EVENTS: List[Dict] = []
+SAN_EVENTS: List[Dict] = []
 
 
 # -----------------------------
@@ -25,20 +25,20 @@ def normalize_ts(ts: str):
 
 
 # -----------------------------
-# INGEST STORAGE DISCOVERY
+# INGEST SAN DISCOVERY
 # -----------------------------
-@ingest_router.post("/storage")
-def ingest_storage(payload: Dict):
-    required_fields = [
+@ingest_router.post("/san")
+def ingest_san(payload: Dict):
+    required = [
         "client_id",
         "environment",
         "run_id",
         "host",
-        "storage",
+        "san",
         "timestamp",
     ]
 
-    for field in required_fields:
+    for field in required:
         if field not in payload:
             raise HTTPException(
                 status_code=400,
@@ -46,24 +46,24 @@ def ingest_storage(payload: Dict):
             )
 
     payload["timestamp"] = normalize_ts(payload["timestamp"])
-    STORAGE_EVENTS.append(payload)
+    SAN_EVENTS.append(payload)
 
     return {
         "status": "accepted",
-        "stored_events": len(STORAGE_EVENTS),
+        "stored_events": len(SAN_EVENTS),
     }
 
 
 # -----------------------------
-# STORAGE OVERVIEW (Dashboard)
+# SAN OVERVIEW (Dashboard)
 # -----------------------------
-@read_router.get("/storage/overview")
-def storage_overview(
+@read_router.get("/san/overview")
+def san_overview(
     client_id: str = Query(...),
     environment: str = Query(...),
 ):
     relevant = [
-        e for e in STORAGE_EVENTS
+        e for e in SAN_EVENTS
         if e["client_id"] == client_id
         and e["environment"] == environment
     ]
@@ -73,17 +73,20 @@ def storage_overview(
         hosts.append({
             "hostname": e["host"]["hostname"],
             "ip": e["host"]["ip"],
-            "hbas": e["storage"].get("hbas", []),
-            "luns": e["storage"].get("luns", []),
-            "mappings": e["storage"].get("mappings", []),
+            "fcas": e["san"].get("fcas", []),
+            "switches": e["san"].get("switches", []),
+            "lun_mappings": e["san"].get("lun_mappings", []),
             "last_seen": e["timestamp"].isoformat(),
         })
 
     summary = {
         "hosts": len(hosts),
-        "hbas": sum(len(h["hbas"]) for h in hosts),
-        "luns": sum(len(h["luns"]) for h in hosts),
-        "mappings": sum(len(h["mappings"]) for h in hosts),
+        "fcas": sum(len(h["fcas"]) for h in hosts),
+        "switch_ports": sum(
+            len(s.get("ports", []))
+            for h in hosts for s in h["switches"]
+        ),
+        "luns": sum(len(h["lun_mappings"]) for h in hosts),
     }
 
     return {

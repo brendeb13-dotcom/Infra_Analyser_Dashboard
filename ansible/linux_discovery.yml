@@ -1,0 +1,118 @@
+---
+- name: Linux Storage, SAN and Cluster Discovery (Read-Only)
+  hosts: all
+  gather_facts: yes
+  become: false
+
+  vars:
+    backend_url: "http://localhost:8000"
+    tmp_dir: "/tmp/infra_discovery"
+
+  tasks:
+
+    - name: Validate required inputs
+      assert:
+        that:
+          - client_id is defined
+          - env_name is defined
+          - run_id is defined
+        fail_msg: >
+          Missing required variables.
+          Use:
+          -e client_id=demo_client
+          -e env_name=dev
+          -e run_id=run_001
+
+    - name: Ensure temp directory exists
+      file:
+        path: "{{ tmp_dir }}"
+        state: directory
+        mode: "0755"
+
+    # =========================================================
+    # STORAGE DISCOVERY
+    # =========================================================
+    - name: Copy storage discovery script
+      copy:
+        src: ../wrappers/linux/discover_storage.py
+        dest: "{{ tmp_dir }}/discover_storage.py"
+        mode: "0755"
+
+    - name: Run storage discovery
+      command: python3 {{ tmp_dir }}/discover_storage.py
+      environment:
+        CLIENT_ID: "{{ client_id }}"
+        ENVIRONMENT: "{{ env_name }}"
+        RUN_ID: "{{ run_id }}"
+      register: storage_output
+
+    - name: Send storage data to backend
+      uri:
+        url: "{{ backend_url }}/api/storage"
+        method: POST
+        body: "{{ storage_output.stdout | from_json }}"
+        body_format: json
+        headers:
+          Content-Type: application/json
+        status_code: [200, 201]
+
+    # =========================================================
+    # SAN DISCOVERY
+    # =========================================================
+    - name: Copy SAN discovery script
+      copy:
+        src: ../wrappers/linux/discover_san.py
+        dest: "{{ tmp_dir }}/discover_san.py"
+        mode: "0755"
+
+    - name: Run SAN discovery
+      command: python3 {{ tmp_dir }}/discover_san.py
+      environment:
+        CLIENT_ID: "{{ client_id }}"
+        ENVIRONMENT: "{{ env_name }}"
+        RUN_ID: "{{ run_id }}"
+      register: san_output
+
+    - name: Send SAN data to backend
+      uri:
+        url: "{{ backend_url }}/api/san"
+        method: POST
+        body: "{{ san_output.stdout | from_json }}"
+        body_format: json
+        headers:
+          Content-Type: application/json
+        status_code: [200, 201]
+
+
+    # -----------------------------
+    # CLUSTER + APPS
+    # -----------------------------
+    - name: Copy cluster discovery script
+      copy:
+        src: ../wrappers/linux/discover_cluster.py
+        dest: "{{ tmp_dir }}/discover_cluster.py"
+        mode: "0755"
+
+    - name: Run cluster discovery
+      command: python3 discover_cluster.py
+      args:
+        chdir: "{{ tmp_dir }}"
+      environment:
+        CLIENT_ID: "{{ client_id }}"
+        ENVIRONMENT: "{{ env_name }}"
+        RUN_ID: "{{ run_id }}"
+      register: cluster_output
+
+    - name: Send cluster data to backend
+      uri:
+        url: "{{ backend_url }}/api/v1/cluster"
+        method: POST
+        body: "{{ cluster_output.stdout }}"
+        body_format: json
+        headers:
+          Content-Type: application/json
+        status_code: [200, 201]
+        
+    - name: Discovery completed
+      debug:
+        msg: "Storage, SAN and Cluster discovery completed successfully"

@@ -1,0 +1,42 @@
+{
+  "client_id": "demo_client",
+  "environment": "dev",
+  "run_id": "run_001",
+  "source": "ansible",
+  "timestamp": "2026-01-22T10:37:28.810775+00:00",
+  "host": {
+    "hostname": "DESKTOP-TH3V56S",
+    "ip": "127.0.1.1",
+    "os": "linux"
+  },
+  "storage": {
+    "hbas": [],
+    "luns": [
+      {
+        "lun_id": "sda",
+        "size": "388.6M",
+        "device": "/dev/sda",
+        "vendor": "Msft"
+      },
+      {
+        "lun_id": "sdb",
+        "size": "186M",
+        "device": "/dev/sdb",
+        "vendor": "Msft"
+      },
+      {
+        "lun_id": "sdc",
+        "size": "1G",
+        "device": "/dev/sdc",
+        "vendor": "Msft"
+      },
+      {
+        "lun_id": "sdd",
+        "size": "1T",
+        "device": "/dev/sdd",
+        "vendor": "Msft"
+      }
+    ],
+    "mappings": []
+  }
+}

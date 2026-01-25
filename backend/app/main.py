@@ -12,9 +12,10 @@ from app.api import health
 from app.api import overview
 from datetime import datetime, timezone
 from fastapi.middleware.cors import CORSMiddleware
-
-
-
+from app.api import storage
+from app.api import storage_overview
+from app.api import cluster
+from app.api import san
 
 settings = get_settings()
 
@@ -60,8 +61,23 @@ app.include_router(health_checks.router)
 app.include_router(capabilities.router)
 app.include_router(health.router, prefix="/api")
 app.include_router(overview.router)
+# -----------------------------
+# STORAGE
+# -----------------------------
+app.include_router(storage.ingest_router)
+app.include_router(storage.read_router)
 
+# -----------------------------
+# SAN
+# -----------------------------
+app.include_router(san.ingest_router)
+app.include_router(san.read_router)
 
+# -----------------------------
+# CLUSTER
+# -----------------------------
+app.include_router(cluster.ingest_router)
+app.include_router(cluster.read_router)
 
 
 @app.get("/")
