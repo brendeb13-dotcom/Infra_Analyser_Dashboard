@@ -31,3 +31,16 @@ Frontend will start at:
 
 http://localhost:5173
 
+4. ANSIBLE
+
+cd ansible
+
+   ansible-playbook -i inventory.ini ansible/linux_discovery.yml \
+  -e client_id=demo_client \
+  -e env_name=dev \
+  -e run_id=run_001
+
+Now the Dashboard will be up and running in the frontend
+
+
+
