@@ -4,14 +4,14 @@ export default function GlobalSearchBar({ value, onChange }) {
       type="text"
       placeholder="Search across dashboard…"
       value={value}
-      onChange={e => onChange(e.target.value)}
+      onChange={(e) => onChange(e.target.value)}
       style={{
-        width: "100%",
-        padding: "10px",
-        fontSize: "1rem",
+        width: "320px",
+        padding: "10px 12px",
+        borderRadius: "8px",
+        border: "1px solid #CBD5E1",
         marginBottom: "16px",
-        borderRadius: "6px",
-        border: "1px solid #ccc"
+        fontSize: "0.9rem"
       }}
     />
   );

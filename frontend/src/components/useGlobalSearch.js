@@ -1,20 +1,29 @@
 import { useState } from "react";
 
+/**
+ * Generic global search hook
+ * Works with arrays of objects
+ */
 export default function useGlobalSearch() {
   const [query, setQuery] = useState("");
 
-  const filter = (items, keys) => {
-    if (!query) return items;
+  const filter = (data = [], fields = []) => {
+    if (!query) return data;
 
-    return items.filter(item =>
-      keys.some(key => {
-        const value = key.split(".").reduce((o, k) => o?.[k], item);
-        return String(value || "")
-          .toLowerCase()
-          .includes(query.toLowerCase());
+    const q = query.toLowerCase();
+
+    return data.filter((item) =>
+      fields.some((field) => {
+        const value = item[field];
+        if (value === undefined || value === null) return false;
+        return String(value).toLowerCase().includes(q);
       })
     );
   };
 
-  return { query, setQuery, filter };
+  return {
+    query,
+    setQuery,
+    filter
+  };
 }

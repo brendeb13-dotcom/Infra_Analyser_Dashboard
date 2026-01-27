@@ -1,40 +1,43 @@
 export default function ExportButton({ data, filename }) {
-  const exportJSON = () => {
-    const blob = new Blob([JSON.stringify(data, null, 2)], {
-      type: "application/json"
-    });
-    download(blob, `${filename}.json`);
-  };
-
-  const exportCSV = () => {
-    if (!data.length) return;
+  const exportToCsv = () => {
+    if (!data || data.length === 0) return;
 
     const headers = Object.keys(data[0]);
-    const rows = data.map(d =>
-      headers.map(h => JSON.stringify(d[h] ?? "")).join(",")
+    const rows = data.map(row =>
+      headers.map(h => JSON.stringify(row[h] ?? "")).join(",")
     );
 
-    const csv = [headers.join(","), ...rows].join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
+    const csvContent =
+      headers.join(",") + "\n" + rows.join("\n");
 
-    download(blob, `${filename}.csv`);
-  };
+    const blob = new Blob([csvContent], {
+      type: "text/csv;charset=utf-8;"
+    });
 
-  const download = (blob, name) => {
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = name;
-    a.click();
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${filename}.csv`;
+    link.click();
     URL.revokeObjectURL(url);
   };
 
   return (
-    <div style={{ marginBottom: "16px" }}>
-      <button onClick={exportCSV}>Export CSV</button>
-      <button onClick={exportJSON} style={{ marginLeft: "8px" }}>
-        Export JSON
-      </button>
-    </div>
+    <button
+      onClick={exportToCsv}
+      style={{
+        background: "#1D7A8C",
+        color: "white",
+        padding: "8px 14px",
+        borderRadius: "6px",
+        border: "none",
+        cursor: "pointer",
+        fontWeight: 600,
+        marginBottom: "16px",
+        marginLeft: "12px"
+      }}
+    >
+      Export CSV
+    </button>
   );
 }
