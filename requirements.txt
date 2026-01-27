@@ -1,0 +1,17 @@
+# Core framework
+fastapi==0.110.0
+uvicorn[standard]==0.27.1
+
+# Configuration & utilities
+pydantic==2.6.1
+python-dotenv==1.0.1
+
+# Async / lifecycle helpers
+anyio==4.2.0
+starlette==0.36.3
+
+# Logging
+loguru==0.7.2
+
+# HTTP client (optional but useful for future extensions)
+httpx==0.26.0
