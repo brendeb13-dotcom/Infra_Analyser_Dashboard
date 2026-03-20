@@ -109,7 +109,7 @@ export default function SanOverview() {
   };
 
   return (
-    <div style={styles.page}>
+    <div className="container" style={styles.page}>
       {/* HEADER */}
       <div style={styles.header}>
         <h2 style={styles.title}>SAN Overview</h2>

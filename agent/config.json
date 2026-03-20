@@ -1,0 +1,5 @@
+{
+    "backend_url": "http://(backend-ip):8000",
+    "client_id": "demo_client",
+    "environment": "demo"
+}

@@ -89,6 +89,7 @@ export default function StorageOverview() {
   const filteredHosts = filter(data.hosts, [
     "hostname",
     "ip",
+    "os",
     "luns.lun_id",
     "luns.device",
     "luns.vendor",
@@ -96,18 +97,13 @@ export default function StorageOverview() {
   ]);
 
   /* ✅ Total Capacity calculation (approx, GB-based) */
-  const totalCapacity = filteredHosts.reduce((sum, h) => {
-    return (
-      sum +
-      h.luns.reduce((s, l) => {
-        const size = parseFloat(l.size); // e.g. "100G"
-        return isNaN(size) ? s : s + size;
-      }, 0)
-    );
-  }, 0);
+  const totalCapacity = filteredHosts.reduce(
+  (sum, h) => sum + (h.total_capacity_gb || 0),
+  0
+);
 
   return (
-    <div style={styles.page}>
+    <div className="container" style={styles.page}>
       {/* HEADER */}
       <div style={styles.header}>
         <h2 style={styles.title}>Storage Overview</h2>

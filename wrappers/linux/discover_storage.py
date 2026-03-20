@@ -17,6 +17,7 @@ SOURCE = "ansible"
 
 HOSTNAME = socket.gethostname()
 IP_ADDRESS = socket.gethostbyname(HOSTNAME)
+os_info = subprocess.check_output(["uname", "-s"], text=True).strip() or "Linux"
 
 TIMESTAMP = datetime.now(timezone.utc).isoformat()
 
@@ -121,10 +122,10 @@ def main():
         "run_id": RUN_ID,
         "source": SOURCE,
         "timestamp": TIMESTAMP,
+        "os": run(["uname", "-s"]) or "Linux",
         "host": {
             "hostname": HOSTNAME,
             "ip": IP_ADDRESS,
-            "os": "linux",
         },
         "storage": {
             "hbas": hbas,

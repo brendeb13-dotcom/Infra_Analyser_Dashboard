@@ -12,6 +12,7 @@ def storage_overview(
     client_id: str = Query(...),
     environment: str = Query(...),
 ):
+    print("full list of storage events:", STORAGE_EVENTS)  # Debug log
     relevant = [
         e for e in STORAGE_EVENTS
         if e["client_id"] == client_id
@@ -25,6 +26,7 @@ def storage_overview(
             "generated_at": datetime.now(timezone.utc).isoformat(),
             "summary": {
                 "hosts": 0,
+                "os": 0,
                 "hbas": 0,
                 "luns": 0,
                 "mappings": 0,
@@ -42,6 +44,7 @@ def storage_overview(
         hosts.setdefault(host, {
             "hostname": host,
             "ip": event["host"]["ip"],
+            "os": event.get("host", {}).get("os", "N/A"),
             "hbas": [],
             "luns": [],
             "mappings": [],
@@ -62,6 +65,7 @@ def storage_overview(
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "summary": {
             "hosts": len(hosts),
+            "os": len(set(h["os"] for h in hosts.values())),
             "hbas": total_hbas,
             "luns": total_luns,
             "mappings": total_mappings,

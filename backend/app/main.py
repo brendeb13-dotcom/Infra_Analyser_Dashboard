@@ -7,7 +7,7 @@ from contextlib import asynccontextmanager
 from .core.config import get_settings
 from .core.logging import logger
 from .db import init_db
-from .api import health_checks, capabilities
+from .api import health_checks
 from app.api import health
 from app.api import overview
 from datetime import datetime, timezone
@@ -58,7 +58,6 @@ app.add_middleware(
 
 # Include routers
 app.include_router(health_checks.router)
-app.include_router(capabilities.router)
 app.include_router(health.router, prefix="/api")
 app.include_router(overview.router)
 # -----------------------------

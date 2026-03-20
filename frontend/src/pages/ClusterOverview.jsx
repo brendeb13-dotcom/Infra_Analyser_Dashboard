@@ -89,7 +89,7 @@ export default function ClusterOverview() {
   ]);
 
   return (
-    <div style={styles.page}>
+    <div className="container" style={styles.page}>
       {/* HEADER */}
       <div style={styles.header}>
         <div>

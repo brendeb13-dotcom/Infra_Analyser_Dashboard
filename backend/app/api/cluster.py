@@ -9,7 +9,7 @@ ingest_router = APIRouter(prefix="/api/v1", tags=["cluster-ingest"])
 read_router   = APIRouter(prefix="/api/v1", tags=["cluster-read"])
 
 # =====================================================
-# In-memory store (B2 scope)
+# In-memory store
 # =====================================================
 CLUSTER_EVENTS: List[Dict] = []
 
@@ -23,11 +23,11 @@ def normalize_ts(ts: str):
         return datetime.now(timezone.utc)
 
 # =====================================================
-# INGEST: Cluster Discovery
-# POST /api/v1/cluster
+# INGEST
 # =====================================================
 @ingest_router.post("/cluster")
 def ingest_cluster(payload: Dict):
+
     required_fields = [
         "client_id",
         "environment",
@@ -53,8 +53,7 @@ def ingest_cluster(payload: Dict):
     }
 
 # =====================================================
-# READ: Cluster Overview (Dashboard)
-# GET /api/v1/cluster/overview
+# OVERVIEW
 # =====================================================
 @read_router.get("/cluster/overview")
 def get_cluster_overview(
@@ -71,7 +70,6 @@ def get_cluster_overview(
         return {
             "client_id": client_id,
             "environment": environment,
-            "generated_at": datetime.now(timezone.utc).isoformat(),
             "clusters": [],
         }
 
@@ -100,7 +98,6 @@ def get_cluster_overview(
     return {
         "client_id": client_id,
         "environment": environment,
-        "generated_at": datetime.now(timezone.utc).isoformat(),
         "clusters": [
             {
                 "name": c["name"],
@@ -113,8 +110,7 @@ def get_cluster_overview(
     }
 
 # =====================================================
-# READ: Cluster Details
-# GET /api/v1/cluster/{cluster_name}
+# DETAILS (IMPORTANT FOR YOUR UI)
 # =====================================================
 @read_router.get("/cluster/{cluster_name}")
 def get_cluster_details(
@@ -141,6 +137,7 @@ def get_cluster_details(
 
     for event in relevant:
         ts = event["timestamp"]
+
         for node in event["cluster"].get("nodes", []):
             hostname = node.get("hostname")
             if hostname:
@@ -159,3 +156,4 @@ def get_cluster_details(
             "last_seen": cluster["last_seen"].isoformat(),
         },
     }
+

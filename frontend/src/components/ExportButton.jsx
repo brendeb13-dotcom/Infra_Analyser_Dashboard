@@ -37,7 +37,7 @@ export default function ExportButton({ data, filename }) {
         marginLeft: "12px"
       }}
     >
-      Export CSV
+      Download CSV
     </button>
   );
 }

@@ -5,6 +5,12 @@ export default function StorageHostDetails({ host }) {
     <div style={{ marginTop: "32px" }}>
       <h3>Host Details: {host.hostname}</h3>
 
+      {/* 🔥 NEW SUMMARY */}
+      <p><b>OS:</b> {host.os}</p>
+      <p><b>Total Capacity:</b> {host.total_capacity_gb || 0} GB</p>
+      <p><b>Vendors:</b> {host.lun_vendors?.join(", ") || "—"}</p>
+      <p><b>Drivers:</b> {host.hba_drivers?.join(", ") || "—"}</p>
+
       {/* HBAs */}
       <h4>HBAs</h4>
       <table border="1" cellPadding="8" width="100%">

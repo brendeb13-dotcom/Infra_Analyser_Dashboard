@@ -88,10 +88,10 @@ def main():
         "run_id": RUN_ID,
         "source": SOURCE,
         "timestamp": TIMESTAMP,
+        "os": run(["uname", "-s"]) or "Linux",
         "host": {
             "hostname": HOSTNAME,
             "ip": IP_ADDRESS,
-            "os": "linux",
         },
         "san": {
             "hbas": hbas,
